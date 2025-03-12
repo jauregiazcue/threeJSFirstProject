@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 
 const random_hex_color_code = () => {
     // Generate a random number and convert it to hexadecimal string representation.
@@ -9,29 +10,54 @@ const random_hex_color_code = () => {
     return '#' + n.slice(0, 6);
 };
 
-function loadObject(scene, path) {
-    const loader = new OBJLoader();
-    let model = null;
-    loader.load(
-        path, obj => {
-            model = obj;
-            model.rotation.set(0,0,1.5708);
-            model.position.set(5,30,0);
-            scene.add(model);
-        });
+function loadObject(scene, modelPath, mtlPath) {
+    const mtlLoader = new MTLLoader();
+    let model;
+    mtlLoader.load(
+        mtlPath,
+        (materials) => {
+            materials.preload();
+
+            const objLoader = new OBJLoader();
+            objLoader.setMaterials(materials);
+            objLoader.load(
+                modelPath,
+                (object) => {
+                    model = object;
+                    model.rotation.set(0, 0, 1.5708);
+                    model.position.set(5, 0, 0);
+                    model.scale.set(5,5,5);
+                    scene.add(object);
+                },
+                (xhr) => {
+                    console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+                },
+                (error) => {
+                    console.log('An error happened')
+                }
+            )
+        },
+        (xhr) => {
+            console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+        },
+        (error) => {
+            console.log('An error happened')
+        }
+    )
+
     return model;
 }
 
 function createCube(father, position, scale, myColor) {
 
-    const geometry = new THREE.CircleGeometry( 5, 2 ); 
-    const material = new THREE.MeshBasicMaterial( { color: myColor } ); 
-    const circle = new THREE.Mesh( geometry, material ); 
+    const geometry = new THREE.CircleGeometry(5, 2);
+    const material = new THREE.MeshBasicMaterial({ color: myColor });
+    const circle = new THREE.Mesh(geometry, material);
 
     circle.position.set(position[0], position[1], position[2]);
     circle.scale.set(scale[0], scale[1], scale[2]);
     father.add(circle);
-    
+
 
     return circle;
 }
@@ -60,7 +86,7 @@ document.addEventListener("keyup", (e) => {
     pressedButton = false;
 });
 
-const light = new THREE.PointLight(0xFF0000, 1000);
+const light = new THREE.PointLight(0xFFFFFF, 1000);
 light.position.set(2.5, 7.5, 15);
 scene.add(light);
 
@@ -73,21 +99,22 @@ camera.position.z = 20;
 
 
 let entityList = [];
-entityList.push(createCube(scene, [0, -30, 0], [1, 1, 1], "#FF0000"));
-loadObject(entityList[0], 'ship-small.obj');
-entityList[0].rotation.set(0,90,0);
+entityList.push(createCube(scene, [0, 0, 0], [0.10, 0.10, 0.10], "#FF0000"));
+loadObject(entityList[0], 'ship-small.obj','ship-small.mtl');
+entityList[0].rotation.set(0, 90, 0);
 
 function animate() {
     if (pressedButton) {
-        if(entityList[0].position.y < -20) {
+        if (entityList[0].position.y < 10) {
             entityList[0].position.y += 0.1;
+            
         }
-        
+
     } else {
-        if(entityList[0].position.y > -30) {
+        if (entityList[0].position.y > -10) {
             entityList[0].position.y -= 0.1;
         }
-        
+
     }
 
 
