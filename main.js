@@ -26,7 +26,7 @@ function loadObject(scene, modelPath, mtlPath) {
                     model = object;
                     model.rotation.set(0, 0, 1.5708);
                     model.position.set(5, 0, 0);
-                    model.scale.set(5,5,5);
+                    model.scale.set(5, 5, 5);
                     scene.add(object);
                 },
                 (xhr) => {
@@ -77,13 +77,17 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
 
-let pressedButton = false;
+let pressedButton = 0;
 document.addEventListener("keydown", (e) => {
-    pressedButton = true;
+    let keyCode = e.key;
+    if (e.key === " " && pressedButton <= 0) {
+        pressedButton = 10;
+    }
+
 });
 
 document.addEventListener("keyup", (e) => {
-    pressedButton = false;
+    pressedButton = 0;
 });
 
 const light = new THREE.PointLight(0xFFFFFF, 1000);
@@ -100,21 +104,30 @@ camera.position.z = 20;
 
 let entityList = [];
 entityList.push(createCube(scene, [0, 0, 0], [0.10, 0.10, 0.10], "#FF0000"));
-loadObject(entityList[0], 'ship-small.obj','ship-small.mtl');
+loadObject(entityList[0], 'ship-small.obj', 'ship-small.mtl');
 entityList[0].rotation.set(0, 90, 0);
 
+let dir = 1;
+
+const clock = new THREE.Clock();
+let previousTime = 0;
+let speed = 10;
 function animate() {
-    if (pressedButton) {
-        if (entityList[0].position.y < 10) {
-            entityList[0].position.y += 0.1;
-            
-        }
+    const elapsedTime = clock.getElapsedTime();
+    const deltaTime = elapsedTime - previousTime;
+    previousTime = elapsedTime;
 
-    } else {
-        if (entityList[0].position.y > -10) {
-            entityList[0].position.y -= 0.1;
-        }
+    if (pressedButton >= 10) {
+        dir = -dir;
+    }
+    if(pressedButton >= 0) {
+        pressedButton = pressedButton - 1.0 * deltaTime;
+    }
 
+    if ((entityList[0].position.y < 10 && dir == 1) ||
+    (entityList[0].position.y > -10 && dir == -1)
+    ) {
+        entityList[0].position.y += speed * dir * deltaTime;
     }
 
 
